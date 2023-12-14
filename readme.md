@@ -1,5 +1,5 @@
 
-# Các công nghệ và thư viện sử dụng trong Project
+# Các công nghệ và thư viện sử dụng trong dự án
 
 - ReactJS
 - MapBox (Load map và xử lý geocode)
