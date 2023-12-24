@@ -32,4 +32,6 @@ body {
   top: 0;
   bottom: 0;
   width: 100%;
+  max-height: 1200px;
+  min-height: 750px;
 }
