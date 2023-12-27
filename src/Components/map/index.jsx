@@ -17,6 +17,7 @@ import {
   Input,
   Label,
   Row,
+  CardImg
 } from "reactstrap";
 
 import "./map.css";
@@ -24,21 +25,11 @@ import ReactDOMServer from 'react-dom/server';
 
 import CardSpacesInfo from "../CardSpaceInfo";
 import { useFormik } from "formik";
-
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import * as yup from "yup";
 
 const Map = () => {
-
-  const validationSchema = yup.object().shape({
-    address: yup.string().required("Vui lòng nhập tiêu đề"),
-    content: yup.string().required("Vui lòng nhập thông tin"),
-    report_date: yup.string().required("Vui lòng nhập ngày bắt đầu"),
-    lat: yup.string().required("Vui lòng nhập kinh độ"),
-    long: yup.string().required("Vui lòng nhập vĩ độ"),
-    phone: yup.string().required("Vui lòng nhập chiều dài"),
-    email: yup.string().required("Vui lòng nhập chiều rộng"),
-  });
-
   const [spacesId, setSpacesId] = useState(null);
   const [modal, setModal] = useState(false);
   const [formReports, setFormReports] = useState([]);
@@ -131,7 +122,7 @@ const Map = () => {
   const renderOptionsFormReport = () => {
     return (
       formReports && formReports.map((formReport, i) => (
-          <option value={formReport.id} key={i}>{formReport.name}</option>
+        <option value={formReport.id} key={i}>{formReport.name}</option>
       ))
     )
   }
@@ -199,6 +190,7 @@ const Map = () => {
           });
 
           map.on('click', 'myDataCircles', (e) => {
+            setFullAddress(e.features[0].properties.full_address)
             setSpacesId(e.features[0].properties.id)
             const coordinates = e.features[0].geometry.coordinates.slice();
             const CardSpaces = ReactDOMServer.renderToString(<CardSpacesInfo features={e.features[0]} />);
@@ -240,6 +232,84 @@ const Map = () => {
 
   }, []);
 
+
+  //FORMIK
+  const [fullAddress, setFullAddress] = useState(null);
+  const [thumbnail, setThumbnail] = useState('');
+
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+      email: "",
+      phone: "",
+      content: "",
+      formReport: 0,
+      space: 0,
+      imgUrl: null,
+    },
+    onSubmit: async (values) => {
+      try {
+        console.log("add report space is called");
+        await handleAddReportSpace(values);
+
+      } catch (error) {
+
+      }
+    },
+  });
+
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        formik.setFieldValue('imgUrl', file);
+        setThumbnail(reader.result);
+      };
+
+      reader.readAsDataURL(file);
+    }
+  };
+
+
+
+
+  const handleAddReportSpace = async (values) => {
+    console.log("handleAddReportSpace is called");
+    const reportData = {
+      name: formik.values.name,
+      email: formik.values.email,
+      phone: formik.values.phone,
+      content: formik.values.content,
+      imgUrl: formik.values.imgUrl,
+      formReport: parseInt(formik.values.formReport),
+      space: parseInt(spacesId),
+    };
+    console.log(reportData)
+
+    // const formData = new FormData();
+    // formData.append('name', values.name);
+    // formData.append('email', values.email);
+    // formData.append('phone', values.phone);
+    // formData.append('content', values.content);
+    // formData.append('imgUrl', values.imgUrl);
+    // formData.append('formReport', parseInt(values.formReport));
+    // formData.append('space', parseInt(spacesId));
+
+
+    const { data } = await axiosService.post('/reports-space', reportData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    console.log(data)
+
+  }
+
+
   return (
     <>
       <div className="row">
@@ -252,8 +322,8 @@ const Map = () => {
           Danh sách bảng quảng cáo
         </div>
       </div>
-      <Modal isOpen={modal} toggle={toggle}>
-        <ModalHeader toggle={toggle}>Người dân báo cáo - {spacesId}</ModalHeader>
+      <Modal isOpen={modal} toggle={toggle} size="xl">
+        <ModalHeader toggle={toggle}>Người dân báo cáo - {fullAddress}</ModalHeader>
         <ModalBody>
           <Row>
             <Col md={12}>
@@ -262,67 +332,139 @@ const Map = () => {
                   Thêm báo cáo
                 </CardTitle>
                 <CardBody>
-                  <Form >
-                    <FormGroup>
-                      <Label for="exampleEmail" className="fw-bold">
-                        Tên người dùng
-                      </Label>
-                      <Input
-                        name="name"
-                        placeholder="Nhập địa chỉ"
-                        type="text"
-                      />
-                    </FormGroup>
-                    <FormGroup>
-                      <Label for="exampleEmail" className="fw-bold">
-                        Email
-                      </Label>
-                      <Input
-                        name="email"
-                        placeholder="Nhập địa chỉ"
-                        type="text"
-                      />
-                    </FormGroup>
+                  <Form onSubmit={formik.handleSubmit}>
+                    <Row>
+                      <Col md={6}>
+                        <FormGroup>
+                          <Label for="exampleEmail" className="fw-bold">
+                            Tên người dùng
+                          </Label>
+                          <Input
+                            name="name"
+                            placeholder="Nhập địa chỉ"
+                            type="text"
+                            value={formik.values.name}
+                            onChange={formik.handleChange}
+                          />
+                        </FormGroup>
+                      </Col>
+                      <Col md={6}>
+                        <FormGroup>
+                          <Label for="exampleEmail" className="fw-bold">
+                            Email
+                          </Label>
+                          <Input
+                            name="email"
+                            placeholder="Nhập email"
+                            type="text"
+                            value={formik.values.email}
+                            onChange={formik.handleChange}
+                          />
+                        </FormGroup>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col md={6}>
+                        <FormGroup>
+                          <Label for="exampleEmail" className="fw-bold">
+                            Điện thoại
+                          </Label>
+                          <Input
+                            name="phone"
+                            placeholder="Nhập số điện thoại"
+                            type="text"
+                            value={formik.values.phone}
+                            onChange={formik.handleChange}
+                          />
+                        </FormGroup>
+                      </Col>
+                      <Col md={6}>
+                        <FormGroup>
+                          <Label for="exampleSelect">Select</Label>
+                          <Input
+                            type="select"
+                            id="formReport"
+                            name="formReport"
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            value={formik.values.formReport}
+                            className="form-control">
+                            <option value="">Chọn hình thức quảng cáo</option>
+                            {renderOptionsFormReport()}
+                          </Input>
+                        </FormGroup>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col md={6}>
+                        <FormGroup>
+                          <Label for="exampleEmail" className="fw-bold">
+                            Ảnh báo cáo
+                          </Label>
+                          <Input
+                            type="file"
+                            id="imgUrl"
+                            name="imgUrl"
+                            accept="image/*"
+                            onChange={(e) => handleFileChange(e)}
+                          />
+                        </FormGroup>
+                      </Col>
+                      <Col md={6}>
+                        {thumbnail &&
+                          <Card>
+                            <div
+                              style={{
+                                width: '200px', /* Đặt chiều rộng mong muốn */
+                                height: '200px', /* Đặt chiều cao mong muốn */
+                                overflow: 'hidden', /* Đảm bảo hình ảnh không bị tràn ra khỏi khu vực chứa */
+                              }}
+                            >
+                              <CardImg
+                                alt="Card image cap"
+                                src={thumbnail}
+                                top
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                }}
+                              />
+                            </div>
+                          </Card>
+                        }
+                      </Col>
+                    </Row>
 
-                    <FormGroup>
-                      <Label for="exampleEmail" className="fw-bold">
-                        Điện thoại
-                      </Label>
-                      <Input
-                        name="phone"
-                        placeholder="Nhập địa chỉ"
-                        type="text"
-                      />
-                    </FormGroup>
-                    <FormGroup>
-                      <Label for="exampleEmail" className="fw-bold">
-                        Ảnh báo cáo
-                      </Label>
-                      <Input
-                        name="name"
-                        placeholder="Nhập địa chỉ"
-                        type="file"
-                      />
-                    </FormGroup>
-                    <FormGroup>
-                      <Label for="exampleSelect">Select</Label>
-                      <Input type="select" name="select" id="exampleSelect" onChange={(e) => setFormReportsId(e.target.value)} className="form-control"> 
-                        <option value="">Chọn hình thức quảng cáo</option>
-                       {renderOptionsFormReport()}
-                       </Input>
-                    </FormGroup>
                     <FormGroup>
                       <Label for="exampleEmail" className="fw-bold">
                         Nội dung
                       </Label>
-                      <Input
-                        name="content"
-                        placeholder="Content"
-                        type="textarea"
-                        aria-multiline
-                        rows="7"
+
+                      <CKEditor
+                        editor={ClassicEditor}
+                        data={formik.values.content}
+                        onReady={editor => {
+
+                        }}
+                        onChange={(event, editor) => {
+                          const data = editor.getData();
+                          formik.setFieldValue('content', data);
+                          console.log('Form values after CKEditor change:', formik.values);
+                        }}
+
                       />
+
                     </FormGroup>
+                    <Button
+                      color="success"
+                      style={{ marginLeft: "40%" }}
+                      type="submit"
+                      onClick={toggle}
+
+                    >
+                      Báo cáo
+                    </Button>
                   </Form>
                 </CardBody>
               </Card>
@@ -330,12 +472,12 @@ const Map = () => {
           </Row>
         </ModalBody>
         <ModalFooter>
-          <Button color="primary" onClick={toggle}>
+          {/* <Button color="primary" onClick={toggle}>
             Báo cáo
           </Button>
           <Button color="secondary" onClick={toggle}>
             Huỷ
-          </Button>
+          </Button> */}
         </ModalFooter>
       </Modal>
     </>
