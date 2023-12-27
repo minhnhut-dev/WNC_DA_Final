@@ -28,13 +28,13 @@ import { useFormik } from "formik";
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import * as yup from "yup";
+import ListSurfaces from "../ListSurface";
 
 const Map = () => {
   const [spacesId, setSpacesId] = useState(null);
   const [modal, setModal] = useState(false);
   const [formReports, setFormReports] = useState([]);
-  const [formReportsId, setFormReportsId] = useState(null);
-
+  const [listSurfaces, setListSurfaces] = useState([]);
   const toggle = () => setModal(!modal);
 
   const loadSpaces = async () => {
@@ -42,8 +42,13 @@ const Map = () => {
     return response.data;
   }
 
+  const handleLoadSurfacesBySpaces = async (id) => {
+    const {data} = await axiosService.get(`/surfaces/${id}`);
+    return data;
+  }
+
   const handleLoadFormReports = async () => {
-    const { data } = await axiosService.get("/form-reports");
+    const { data } = await axiosService.get(`/form-reports`);
     return data;
   }
 
@@ -189,7 +194,7 @@ const Map = () => {
             color: '#314ccd'
           });
 
-          map.on('click', 'myDataCircles', (e) => {
+          map.on('click', 'myDataCircles', async(e) => {
             setFullAddress(e.features[0].properties.full_address)
             setSpacesId(e.features[0].properties.id)
             const coordinates = e.features[0].geometry.coordinates.slice();
@@ -197,6 +202,13 @@ const Map = () => {
             while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
               coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
             }
+            try {
+              const response = await handleLoadSurfacesBySpaces(e.features[0].properties.id);
+              setListSurfaces(response)
+            } catch (error) {
+              console.log(error);
+            }
+            
 
             new mapboxgl.Popup()
               .setLngLat(coordinates)
@@ -205,6 +217,7 @@ const Map = () => {
 
               document.querySelector('.report-spaces').addEventListener('click', () => {
                 toggle();
+                
               });
           });
           // Change the cursor to a pointer when the mouse is over the places layer.
@@ -228,7 +241,6 @@ const Map = () => {
     });
 
   }, []);
-
 
   //FORMIK
   const [fullAddress, setFullAddress] = useState(null);
@@ -298,8 +310,12 @@ const Map = () => {
             <div id="map" ref={mapContainerRef} />
           </div>
         </div>
-        <div className="col-md-3" style={{ backgroundColor: 'red' }}>
-          <span className="text-white fw-bold">Danh sách bảng quảng cáo</span>
+        <div className="col-md-3 col-xs-12" >
+          <h4 className=" fw-bold mt-1">Danh sách bảng quảng cáo</h4>
+          {listSurfaces && listSurfaces.map((surface, i) => (
+          <ListSurfaces key={i} surface={surface}/>
+
+          )) }
         </div>
       </div>
 
