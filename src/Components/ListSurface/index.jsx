@@ -1,8 +1,8 @@
 import React from 'react';
+import { Button, Card, CardText, CardTitle, Container } from 'reactstrap';
+import { API_URL, fixUrl } from '../../constants/index';
 import './ListSurfaces.scss';
-import { Container, Card, CardBody, CardTitle, CardFooter, CardText, Button } from 'reactstrap';
-import { fixUrl, API_URL } from '../../constants/index'
-const ListSurfaces = ({ surface }) => {
+const ListSurfaces = ({ surface, setSurfaceId}) => {
 
   return (
     <>
@@ -31,10 +31,9 @@ const ListSurfaces = ({ surface }) => {
             {/* <CardText  tag="p">
               Phân loại: {surface?.space?.formAdvertising?.name}
             </CardText> */}
-            <Button color='danger'>
+            <Button color='danger' onClick={() => alert()}>
               Báo cáo vi phạm
             </Button>
-            <CardFooter className='text-left'></CardFooter>
           </Card>
         </div>
       </Container>
