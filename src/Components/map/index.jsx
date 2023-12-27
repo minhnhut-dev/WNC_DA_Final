@@ -203,13 +203,10 @@ const Map = () => {
               .setHTML(CardSpaces)
               .addTo(map);
 
-            document.querySelector('.report-spaces').addEventListener('click', () => {
-              toggle();
-            });
-
+              document.querySelector('.report-spaces').addEventListener('click', () => {
+                toggle();
+              });
           });
-
-
           // Change the cursor to a pointer when the mouse is over the places layer.
           map.on('mouseenter', 'myDataCircles', function () {
             map.getCanvas().style.cursor = 'pointer';
@@ -249,9 +246,7 @@ const Map = () => {
     },
     onSubmit: async (values) => {
       try {
-        console.log("add report space is called");
         await handleAddReportSpace(values);
-
       } catch (error) {
 
       }
@@ -278,7 +273,6 @@ const Map = () => {
 
 
   const handleAddReportSpace = async (values) => {
-    console.log("handleAddReportSpace is called");
     const reportData = {
       name: formik.values.name,
       email: formik.values.email,
@@ -288,27 +282,13 @@ const Map = () => {
       formReport: parseInt(formik.values.formReport),
       space: parseInt(spacesId),
     };
-    console.log(reportData)
-
-    // const formData = new FormData();
-    // formData.append('name', values.name);
-    // formData.append('email', values.email);
-    // formData.append('phone', values.phone);
-    // formData.append('content', values.content);
-    // formData.append('imgUrl', values.imgUrl);
-    // formData.append('formReport', parseInt(values.formReport));
-    // formData.append('space', parseInt(spacesId));
-
 
     const { data } = await axiosService.post('/reports-space', reportData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
-    console.log(data)
-
   }
-
 
   return (
     <>
@@ -319,9 +299,10 @@ const Map = () => {
           </div>
         </div>
         <div className="col-md-3" style={{ backgroundColor: 'red' }}>
-          Danh sách bảng quảng cáo
+          <span className="text-white fw-bold">Danh sách bảng quảng cáo</span>
         </div>
       </div>
+
       <Modal isOpen={modal} toggle={toggle} size="xl">
         <ModalHeader toggle={toggle}>Người dân báo cáo - {fullAddress}</ModalHeader>
         <ModalBody>
@@ -450,9 +431,7 @@ const Map = () => {
                         onChange={(event, editor) => {
                           const data = editor.getData();
                           formik.setFieldValue('content', data);
-                          console.log('Form values after CKEditor change:', formik.values);
                         }}
-
                       />
 
                     </FormGroup>
@@ -472,12 +451,6 @@ const Map = () => {
           </Row>
         </ModalBody>
         <ModalFooter>
-          {/* <Button color="primary" onClick={toggle}>
-            Báo cáo
-          </Button>
-          <Button color="secondary" onClick={toggle}>
-            Huỷ
-          </Button> */}
         </ModalFooter>
       </Modal>
     </>
