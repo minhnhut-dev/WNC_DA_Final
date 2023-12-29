@@ -28,7 +28,7 @@ import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import * as yup from "yup";
 import ListSurfaces from "../ListSurface";
-import ModalReport from "../ModaReport";
+// import ModalReport from "../ModaReport";
 
 const Map = () => {
   const [spacesId, setSpacesId] = useState(null);
@@ -471,7 +471,7 @@ const Map = () => {
         </ModalBody>
       </Modal>
 
-      <ModalReport  callback={handleReportSurfaces} isOpen={surfaceId} toggle={toggleModalReportSurface}/>
+      {/* <ModalReport  callback={handleReportSurfaces} isOpen={surfaceId} toggle={toggleModalReportSurface}/> */}
     </>
   );
 };
