@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { Formik, useFormik } from 'formik';
 import { Button, Modal, ModalHeader, ModalBody } from 'reactstrap';
 import { axiosService } from '../../Services/axiosServices';
@@ -14,8 +14,13 @@ import {
   Row,
   CardImg
 } from "reactstrap";
+import {CKEditor} from "@ckeditor/ckeditor5-react";
+import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
+import Swal from "sweetalert2";
 
-const ModalReport = ({callback, isOpen, toggle}) => {
+const ModalReport = ({handleReportSurfaces, isOpen, toggle, formReports}) => {
+  const [thumbnail, setThumbnail] = useState('');
+
   const formik = useFormik({
     initialValues: {
       name: "",
@@ -23,22 +28,67 @@ const ModalReport = ({callback, isOpen, toggle}) => {
       phone: "",
       content: "",
       formReport: 0,
-      space: 0,
+      surface: 0,
       imgUrl: null,
     },
     onSubmit: async (values) => {
-      try {
-        callback(values);
-      } catch (error) {
+      const params = {
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        imgUrl: values.imgUrl,
+        content: values.content,
+        formReport: values.formReport,
+        surface: isOpen,
+      }
 
+      try {
+        handleReportSurfaces(params).then(() => {
+          Swal.fire({
+            title: "Báo cáo",
+            text: "Báo cáo thành công",
+            icon: "success"
+          })
+        })
+        toggle();
+      } catch (error) {
+        Swal.fire({
+          text: "Báo cáo thất bại",
+          icon: "error",
+
+        })
+        console.log(error);
       }
     },
   });
 
+  const renderOptionsFormReport = () => {
+    return (
+        formReports && formReports.map((formReport, i) => (
+            <option value={formReport.id} key={i}>{formReport.name}</option>
+        ))
+    )
+  }
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        formik.setFieldValue('imgUrl', file);
+        setThumbnail(reader.result);
+      };
+
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <>
-      <Modal isOpen={isOpen} toggle={toggle} size="xl">
-        <ModalHeader toggle={toggle}>Người dân báo cáo quảng cáo</ModalHeader>
+      <Modal isOpen={isOpen} size="xl">
+        <ModalHeader toggle={toggle}>Người dân báo cáo quảng cáo - {isOpen}</ModalHeader>
         <ModalBody>
           <Row>
             <Col md={12}>
@@ -127,53 +177,49 @@ const ModalReport = ({callback, isOpen, toggle}) => {
                       </Col>
                       <Col md={6}>
                         {thumbnail &&
-                          <Card>
-                            <div
-                              style={{
-                                width: '200px', /* Đặt chiều rộng mong muốn */
-                                height: '200px', /* Đặt chiều cao mong muốn */
-                                overflow: 'hidden', /* Đảm bảo hình ảnh không bị tràn ra khỏi khu vực chứa */
-                              }}
-                            >
-                              <CardImg
-                                alt="Card image cap"
-                                src={thumbnail}
-                                top
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                }}
-                              />
-                            </div>
-                          </Card>
+                            <Card>
+                              <div
+                                  style={{
+                                    width: '200px', /* Đặt chiều rộng mong muốn */
+                                    height: '200px', /* Đặt chiều cao mong muốn */
+                                    overflow: 'hidden', /* Đảm bảo hình ảnh không bị tràn ra khỏi khu vực chứa */
+                                  }}
+                              >
+                                <CardImg
+                                    alt="Card image cap"
+                                    src={thumbnail}
+                                    top
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover',
+                                    }}
+                                />
+                              </div>
+                            </Card>
                         }
                       </Col>
                     </Row>
-
                     <FormGroup>
                       <Label for="exampleEmail" className="fw-bold">
                         Nội dung
                       </Label>
-
                       <CKEditor
-                        editor={ClassicEditor}
-                        data={formik.values.content}
-                        onReady={editor => {
-
-                        }}
-                        onChange={(event, editor) => {
-                          const data = editor.getData();
-                          formik.setFieldValue('content', data);
-                        }}
+                          editor={ClassicEditor}
+                          data={formik.values.content}
+                          onReady={editor => {
+                          }}
+                          onChange={(event, editor) => {
+                            const data = editor.getData();
+                            formik.setFieldValue('content', data);
+                          }}
                       />
-
                     </FormGroup>
+
                     <Button
                       color="success"
                       style={{ marginLeft: "40%" }}
                       type="submit"
-                      onClick={toggle}
 
                     >
                       Báo cáo

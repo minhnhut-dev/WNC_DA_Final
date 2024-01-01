@@ -28,7 +28,7 @@ import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import * as yup from "yup";
 import ListSurfaces from "../ListSurface";
-// import ModalReport from "../ModaReport";
+import ModalReport from "../ModaReport";
 
 const Map = () => {
   const [spacesId, setSpacesId] = useState(null);
@@ -224,7 +224,6 @@ const Map = () => {
 
             document.querySelector('.report-spaces').addEventListener('click', () => {
               toggle();
-
             });
           });
           // Change the cursor to a pointer when the mouse is over the places layer.
@@ -470,8 +469,7 @@ const Map = () => {
           </Row>
         </ModalBody>
       </Modal>
-
-      {/* <ModalReport  callback={handleReportSurfaces} isOpen={surfaceId} toggle={toggleModalReportSurface}/> */}
+       <ModalReport  handleReportSurfaces={handleReportSurfaces} isOpen={surfaceId} toggle={toggleModalReportSurface} formReports={formReports}/>
     </>
   );
 };

@@ -31,7 +31,7 @@ const ListSurfaces = ({ surface, setSurfaceId}) => {
             {/* <CardText  tag="p">
               Phân loại: {surface?.space?.formAdvertising?.name}
             </CardText> */}
-            <Button color='danger' onClick={() => alert()}>
+            <Button color='danger' onClick={() => setSurfaceId(surface?.id)}>
               Báo cáo vi phạm
             </Button>
           </Card>
