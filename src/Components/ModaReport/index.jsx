@@ -2,6 +2,8 @@ import React, {useState} from 'react';
 import { Formik, useFormik } from 'formik';
 import { Button, Modal, ModalHeader, ModalBody } from 'reactstrap';
 import { axiosService } from '../../Services/axiosServices';
+import ReCAPTCHA from "react-google-recaptcha";
+
 import {
   Card,
   CardBody,
@@ -215,12 +217,14 @@ const ModalReport = ({handleReportSurfaces, isOpen, toggle, formReports}) => {
                           }}
                       />
                     </FormGroup>
+                    <ReCAPTCHA
+                      sitekey="6LdBr0QpAAAAAA5i6j_iOudXzia71koXnCO19ifO"
+                    />
 
                     <Button
                       color="success"
                       style={{ marginLeft: "40%" }}
                       type="submit"
-
                     >
                       Báo cáo
                     </Button>

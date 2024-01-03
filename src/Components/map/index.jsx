@@ -29,6 +29,8 @@ import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import * as yup from "yup";
 import ListSurfaces from "../ListSurface";
 import ModalReport from "../ModaReport";
+import ReCAPTCHA from "react-google-recaptcha";
+import Swal from 'sweetalert2';
 
 const Map = () => {
   const [spacesId, setSpacesId] = useState(null);
@@ -235,7 +237,6 @@ const Map = () => {
           map.on('mouseleave', 'myDataCircles', function () {
             map.getCanvas().style.cursor = '';
           });
-
         });
         // Clean up on unmount
         return () => map.remove();
@@ -261,10 +262,12 @@ const Map = () => {
       formReport: 0,
       space: 0,
       imgUrl: null,
+      tokenRecapcha: ""
     },
     onSubmit: async (values) => {
       try {
         await handleAddReportSpace(values);
+        toggle();
       } catch (error) {
 
       }
@@ -298,11 +301,19 @@ const Map = () => {
       space: parseInt(spacesId),
     };
 
-    const { data } = await axiosService.post('/reports-space', reportData, {
+    const { data, status} = await axiosService.post('/reports-space', reportData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
+    if(status === 200 || status === 201) {
+      Swal.fire({
+        title: "Báo cáo",
+        text: "Báo cáo thành công",
+        icon: "success",
+        confirmButtonText: "OK",
+      })
+    }
   }
 
   return (
@@ -322,7 +333,7 @@ const Map = () => {
       </div>
 
       <Modal isOpen={modal} toggle={toggle} size="xl">
-        <ModalHeader toggle={toggle}>Người dân báo cáo - {fullAddress}</ModalHeader>
+        <ModalHeader toggle={toggle} close>Người dân báo cáo - {fullAddress}</ModalHeader>
         <ModalBody>
           <Row>
             <Col md={12}>
@@ -453,12 +464,14 @@ const Map = () => {
                       />
 
                     </FormGroup>
+                    <ReCAPTCHA
+                      sitekey="6LdBr0QpAAAAAA5i6j_iOudXzia71koXnCO19ifO"
+                      onChange={(e) => formik.setFieldValue("tokenRecapcha", e )}
+                    />
                     <Button
                       color="success"
                       style={{ marginLeft: "40%" }}
                       type="submit"
-                      onClick={toggle}
-
                     >
                       Báo cáo
                     </Button>
