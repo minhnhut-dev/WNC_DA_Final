@@ -5,14 +5,13 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import React, { useEffect, useRef, useState } from "react";
 import { axiosService } from "../../Services/axiosServices";
 import { MAPBOX_ACCESS_TOKEN } from "../../config/config";
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
+import { Button, Modal, ModalHeader, ModalBody } from 'reactstrap';
 import {
   Card,
   CardBody,
   CardTitle,
   Col,
   Form,
-  FormFeedback,
   FormGroup,
   Input,
   Label,
@@ -29,21 +28,26 @@ import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import * as yup from "yup";
 import ListSurfaces from "../ListSurface";
+import ModalReport from "../ModaReport";
+import ReCAPTCHA from "react-google-recaptcha";
+import Swal from 'sweetalert2';
 
 const Map = () => {
   const [spacesId, setSpacesId] = useState(null);
   const [modal, setModal] = useState(false);
   const [formReports, setFormReports] = useState([]);
   const [listSurfaces, setListSurfaces] = useState([]);
+  const [surfaceId, setSurfaceId] = useState(null);
+  
   const toggle = () => setModal(!modal);
-
+  const toggleModalReportSurface = () => setSurfaceId(null);
   const loadSpaces = async () => {
     const response = await axiosService.get("/spaces?page=1&limit=100");
     return response.data;
   }
 
   const handleLoadSurfacesBySpaces = async (id) => {
-    const {data} = await axiosService.get(`/surfaces/${id}`);
+    const { data } = await axiosService.get(`/surfaces/space/${id}`);
     return data;
   }
 
@@ -51,6 +55,11 @@ const Map = () => {
     const { data } = await axiosService.get(`/form-reports`);
     return data;
   }
+
+  const handleReportSurfaces = async (params) => {
+    const { data } = await axiosService.post(`/reports-surface`, params);
+    return data;
+  };
 
   const formatGeoJson = (data) => {
     let geoJson = {
@@ -194,7 +203,7 @@ const Map = () => {
             color: '#314ccd'
           });
 
-          map.on('click', 'myDataCircles', async(e) => {
+          map.on('click', 'myDataCircles', async (e) => {
             setFullAddress(e.features[0].properties.full_address)
             setSpacesId(e.features[0].properties.id)
             const coordinates = e.features[0].geometry.coordinates.slice();
@@ -208,17 +217,16 @@ const Map = () => {
             } catch (error) {
               console.log(error);
             }
-            
+
 
             new mapboxgl.Popup()
               .setLngLat(coordinates)
               .setHTML(CardSpaces)
               .addTo(map);
 
-              document.querySelector('.report-spaces').addEventListener('click', () => {
-                toggle();
-                
-              });
+            document.querySelector('.report-spaces').addEventListener('click', () => {
+              toggle();
+            });
           });
           // Change the cursor to a pointer when the mouse is over the places layer.
           map.on('mouseenter', 'myDataCircles', function () {
@@ -229,7 +237,6 @@ const Map = () => {
           map.on('mouseleave', 'myDataCircles', function () {
             map.getCanvas().style.cursor = '';
           });
-
         });
         // Clean up on unmount
         return () => map.remove();
@@ -255,10 +262,12 @@ const Map = () => {
       formReport: 0,
       space: 0,
       imgUrl: null,
+      tokenRecapcha: ""
     },
     onSubmit: async (values) => {
       try {
         await handleAddReportSpace(values);
+        toggle();
       } catch (error) {
 
       }
@@ -281,9 +290,6 @@ const Map = () => {
     }
   };
 
-
-
-
   const handleAddReportSpace = async (values) => {
     const reportData = {
       name: formik.values.name,
@@ -295,11 +301,19 @@ const Map = () => {
       space: parseInt(spacesId),
     };
 
-    const { data } = await axiosService.post('/reports-space', reportData, {
+    const { data, status} = await axiosService.post('/reports-space', reportData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
+    if(status === 200 || status === 201) {
+      Swal.fire({
+        title: "Báo cáo",
+        text: "Báo cáo thành công",
+        icon: "success",
+        confirmButtonText: "OK",
+      })
+    }
   }
 
   return (
@@ -313,14 +327,13 @@ const Map = () => {
         <div className="col-md-3 col-xs-12" >
           <h4 className=" fw-bold mt-1">Danh sách bảng quảng cáo</h4>
           {listSurfaces && listSurfaces.map((surface, i) => (
-          <ListSurfaces key={i} surface={surface}/>
-
-          )) }
+            <ListSurfaces key={i} surface={surface} setSurfaceId={setSurfaceId} />
+          ))}
         </div>
       </div>
 
       <Modal isOpen={modal} toggle={toggle} size="xl">
-        <ModalHeader toggle={toggle}>Người dân báo cáo - {fullAddress}</ModalHeader>
+        <ModalHeader toggle={toggle} close>Người dân báo cáo - {fullAddress}</ModalHeader>
         <ModalBody>
           <Row>
             <Col md={12}>
@@ -451,12 +464,14 @@ const Map = () => {
                       />
 
                     </FormGroup>
+                    <ReCAPTCHA
+                      sitekey="6LdBr0QpAAAAAA5i6j_iOudXzia71koXnCO19ifO"
+                      onChange={(e) => formik.setFieldValue("tokenRecapcha", e )}
+                    />
                     <Button
                       color="success"
                       style={{ marginLeft: "40%" }}
                       type="submit"
-                      onClick={toggle}
-
                     >
                       Báo cáo
                     </Button>
@@ -466,14 +481,10 @@ const Map = () => {
             </Col>
           </Row>
         </ModalBody>
-        <ModalFooter>
-        </ModalFooter>
       </Modal>
+       <ModalReport  handleReportSurfaces={handleReportSurfaces} isOpen={surfaceId} toggle={toggleModalReportSurface} formReports={formReports}/>
     </>
   );
 };
-
-
-
 
 export default Map;
