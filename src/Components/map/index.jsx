@@ -31,6 +31,7 @@ import ListSurfaces from "../ListSurface";
 import ModalReport from "../ModaReport";
 import ReCAPTCHA from "react-google-recaptcha";
 import Swal from 'sweetalert2';
+import Drawer from '../Drawer/index';
 
 const Map = () => {
   const [spacesId, setSpacesId] = useState(null);
@@ -42,7 +43,7 @@ const Map = () => {
   const toggle = () => setModal(!modal);
   const toggleModalReportSurface = () => setSurfaceId(null);
   const loadSpaces = async () => {
-    const response = await axiosService.get("/spaces?page=1&limit=100");
+    const response = await axiosService.get("/spaces?page=1&limit=10000");
     return response.data;
   }
 
@@ -329,6 +330,7 @@ const Map = () => {
           {listSurfaces && listSurfaces.map((surface, i) => (
             <ListSurfaces key={i} surface={surface} setSurfaceId={setSurfaceId} />
           ))}
+
         </div>
       </div>
 
