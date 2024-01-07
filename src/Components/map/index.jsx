@@ -26,12 +26,12 @@ import CardSpacesInfo from "../CardSpaceInfo";
 import { useFormik } from "formik";
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-import * as yup from "yup";
 import ListSurfaces from "../ListSurface";
 import ModalReport from "../ModaReport";
 import ReCAPTCHA from "react-google-recaptcha";
 import Swal from 'sweetalert2';
-import Drawer from '../Drawer/index';
+
+import FilterReportSpace from "../FilterReportSpace/FilterReportSpace";
 
 const Map = () => {
   const [spacesId, setSpacesId] = useState(null);
@@ -39,12 +39,20 @@ const Map = () => {
   const [formReports, setFormReports] = useState([]);
   const [listSurfaces, setListSurfaces] = useState([]);
   const [surfaceId, setSurfaceId] = useState(null);
+
+  const [optionsFilterSpace, setOptionFilterSpace] = useState(null);
   
   const toggle = () => setModal(!modal);
   const toggleModalReportSurface = () => setSurfaceId(null);
-  const loadSpaces = async () => {
-    const response = await axiosService.get("/spaces?page=1&limit=10000");
-    return response.data;
+  
+  const loadSpaces = async (option) => {
+    if(option !== 'report-filter' || option === 'all' || option === "") {
+      const response = await axiosService.get("/spaces?page=1&limit=10000");
+      return response.data;
+    }else{
+      const response = await axiosService.get(`/spaces/filterviolate`);
+      return response.data;
+    }
   }
 
   const handleLoadSurfacesBySpaces = async (id) => {
@@ -143,7 +151,7 @@ const Map = () => {
   }
 
   useEffect(() => {
-    loadSpaces().then((space) => {
+    loadSpaces(optionsFilterSpace).then((space) => {
       const { data } = space;
       if (data) {
         const map = new mapboxgl.Map({
@@ -157,14 +165,18 @@ const Map = () => {
           map.addSource('places', {
             'type': 'geojson',
             'data': formatGeoJson(data),
+            'cluster': true,
+            'clusterMaxZoom': 14, // Max zoom to cluster points on
+            'clusterRadius': 50 // Radius of each cluster when clustering 
           });
+
           map.addLayer({
             id: 'myDataCircles',
             type: 'circle',
             source: 'places',
             paint: {
               'circle-radius': 8,
-              "circle-color": "#11b4da",
+              "circle-color": optionsFilterSpace !== 'report-filter' || optionsFilterSpace === 'all' || optionsFilterSpace === "" ? '#11b4da' : '#FF0000',
               "circle-stroke-width": 1,
               "circle-stroke-color": "#fff",
             }
@@ -175,7 +187,7 @@ const Map = () => {
             source: 'places',
             layout: {
               'text-field': 'QC',
-              'text-size': 6
+              'text-size': 7
             }
           });
 
@@ -248,7 +260,9 @@ const Map = () => {
       setFormReports(response);
     });
 
-  }, []);
+  }, [optionsFilterSpace]);
+
+  console.log('optionsFilterSpace', optionsFilterSpace);
 
   //FORMIK
   const [fullAddress, setFullAddress] = useState(null);
@@ -321,8 +335,9 @@ const Map = () => {
     <>
       <div className="row">
         <div className="col-md-9">
-          <div className="card p-2 mt-1">
+          <div className="card p-2 mt-1 position-relative">
             <div id="map" ref={mapContainerRef} />
+            <FilterReportSpace setOptionFilterSpace={setOptionFilterSpace} />
           </div>
         </div>
         <div className="col-md-3 col-xs-12" >
